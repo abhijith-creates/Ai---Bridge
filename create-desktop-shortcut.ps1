@@ -10,13 +10,12 @@ $VbsPath = Join-Path $ScriptDir "AiBridge.vbs"
 $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
 
 if (Test-Path $ElectronExe) {
-    # Direct GUI executable - 100% NO TERMINAL WINDOW EVER
+    # Direct GUI executable - launches directly without any command prompt window
     $Shortcut.TargetPath = $ElectronExe
-    $Shortcut.Arguments = "`"$ScriptDir`""
+    $Shortcut.Arguments = "."
     $Shortcut.WorkingDirectory = $ScriptDir
     $Shortcut.IconLocation = "$ElectronExe,0"
 } else {
-    # VBS silent wrapper
     $Shortcut.TargetPath = "wscript.exe"
     $Shortcut.Arguments = "`"$VbsPath`""
     $Shortcut.WorkingDirectory = $ScriptDir

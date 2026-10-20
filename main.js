@@ -6,25 +6,10 @@
 
 const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
-const net = require('net');
 
 let mainWindow = null;
 
-// Prevent multiple instances: if user double-clicks shortcut while running, focus existing window
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  app.quit();
-  process.exit(0);
-} else {
-  app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-  });
-}
-
-// Ignore EADDRINUSE or port conflicts cleanly without showing error popups
+// Ignore port conflicts cleanly if a server is already running
 process.on('uncaughtException', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log('[Electron] Port 3388 in use, reusing active server.');
@@ -33,31 +18,12 @@ process.on('uncaughtException', (err) => {
   }
 });
 
-// Check if port 3388 is already bound
-function isPortInUse(port, callback) {
-  const socket = new net.Socket();
-  socket.setTimeout(600);
-  socket.on('connect', () => {
-    socket.destroy();
-    callback(true);
-  });
-  socket.on('error', () => {
-    socket.destroy();
-    callback(false);
-  });
-  socket.on('timeout', () => {
-    socket.destroy();
-    callback(false);
-  });
-  socket.connect(port, '127.0.0.1');
-}
-
 function startEmbeddedServer() {
   try {
     console.log('[Electron] Starting embedded server...');
     require('./server');
   } catch (err) {
-    console.log('[Electron] Embedded server start note:', err.message);
+    console.log('[Electron] Server note:', err.message);
   }
 }
 
@@ -71,6 +37,7 @@ function createWindow() {
     title: 'AI Bridge',
     icon: path.join(__dirname, 'extension/icons/icon128.png'),
     autoHideMenuBar: true,
+    show: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -90,28 +57,49 @@ function createWindow() {
   // Load the desktop interface
   mainWindow.loadURL('http://localhost:3388');
 
+  // Retry if server takes a split second to listen
+  mainWindow.webContents.on('did-fail-load', () => {
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadURL('http://localhost:3388');
+      }
+    }, 400);
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.focus();
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-app.whenReady().then(() => {
-  isPortInUse(3388, (inUse) => {
-    if (!inUse) {
-      startEmbeddedServer();
-      setTimeout(createWindow, 800);
-    } else {
-      console.log('[Electron] Port 3388 is already running, opening window directly.');
-      createWindow();
+// Single instance handling: if already open, focus the window
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+  app.whenReady().then(() => {
+    startEmbeddedServer();
+    createWindow();
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
   });
-});
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
