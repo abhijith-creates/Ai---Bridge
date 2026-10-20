@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Bridge — Universal Web AI Superconnector</title>
+  <meta name="description" content="Open-source bridge connecting local AI coding agents directly with Google AI Studio, Gemini Web, ChatGPT, and Claude without API keys.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- TOP NAVIGATION BAR -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand-logo">⚡</div>
+        <div class="brand-info">
+          <div class="brand-title">AI BRIDGE <span class="badge-os">PRO</span></div>
+          <div class="brand-subtitle">Universal Web LLM Superconnector & Agent Sidecar</div>
+        </div>
+      </div>
+
+      <!-- Live Connectivity Badges -->
+      <div class="header-center">
+        <div class="status-badge" id="badge-mode">
+          <span class="status-indicator local" id="mode-dot"></span>
+          <span class="badge-label">Mode:</span>
+          <span class="badge-value" id="mode-value">Local Workspace</span>
+        </div>
+
+        <div class="status-badge" id="badge-chrome">
+          <span class="status-indicator offline" id="chrome-dot"></span>
+          <span class="badge-label">Chrome Extension:</span>
+          <span class="badge-value" id="chrome-value">Disconnected</span>
+        </div>
+
+        <div class="status-badge" id="badge-target">
+          <span class="status-indicator active"></span>
+          <span class="badge-label">Active Target:</span>
+          <span class="badge-value" id="target-value">AI Studio</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="header-right">
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="mission-control" id="tab-btn-mission">
+            <span class="tab-icon">🚀</span> Mission Control
+          </button>
+          <button class="nav-tab" data-tab="workspace" id="tab-btn-workspace">
+            <span class="tab-icon">📁</span> File Explorer
+          </button>
+          <button class="nav-tab" data-tab="settings" id="tab-btn-settings">
+            <span class="tab-icon">⚙️</span> Settings & VPS
+          </button>
+          <button class="nav-tab" data-tab="guide" id="tab-btn-guide">
+            <span class="tab-icon">📖</span> Guide & Setup
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="main-content">
+      
+      <!-- ==========================================
+           TAB 1: MISSION CONTROL
+           ========================================== -->
+      <section class="tab-page active" id="view-mission-control">
+        <div class="mission-grid">
+          
+          <!-- LEFT COLUMN: TASK DISPATCHER -->
+          <div class="panel dispatch-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="panel-icon">🎯</span> Task Composer & Target Router
+              </div>
+              <div class="panel-actions">
+                <button class="btn-xs btn-ghost" id="btn-clear-task" title="Clear inputs">Clear</button>
+              </div>
+            </div>
+
+            <!-- Target Web Chat Link Selector & Custom URL -->
+            <div class="target-selector-box">
+              <div class="field-label-row">
+                <label for="select-target-platform" class="field-label">Target Web AI Platform / Link</label>
+                <span class="field-hint">Switch between AI Studio, Gemini, ChatGPT, Claude or Custom URL</span>
+              </div>
+              <div class="target-input-row">
+                <select id="select-target-platform" class="input-select">
+                  <option value="https://aistudio.google.com/apps">Google AI Studio (App Builder)</option>
+                  <option value="https://aistudio.google.com/prompts/new_chat">Google AI Studio (Playground)</option>
+                  <option value="https://gemini.google.com/app">Google Gemini Web</option>
+                  <option value="https://chatgpt.com">ChatGPT (OpenAI)</option>
+                  <option value="https://claude.ai/new">Claude (Anthropic)</option>
+                  <option value="custom">🌐 Custom Website Link...</option>
+                </select>
+                <input type="url" id="input-custom-url" class="input-text custom-url-hidden" placeholder="https://example.com/chat" spellcheck="false">
+                <button class="btn-sm btn-secondary" id="btn-open-target-tab" title="Open this web AI chat in Chrome">Open Tab ↗</button>
+              </div>
+            </div>
+
+            <!-- Goal Prompt Input -->
+            <div class="field-group">
+              <div class="field-label-row">
+                <label for="input-task-goal" class="field-label">Instruction / Coding Goal</label>
+                <span class="field-counter" id="goal-char-counter">0 chars</span>
+              </div>
+              <textarea id="input-task-goal" class="input-textarea" rows="6" placeholder="Describe the feature to implement, bug to fix, or architectural upgrade..." spellcheck="false"></textarea>
+            </div>
+
+            <!-- Attached Files Context -->
+            <div class="field-group">
+              <div class="field-label-row">
+                <label class="field-label">Included Workspace Context Files</label>
+                <span class="field-hint" id="attached-files-summary">0 files selected</span>
+              </div>
+              <div class="attached-files-container" id="attached-files-list">
+                <div class="empty-hint">No files selected from the File Explorer tab yet. Check files to inject their code into the prompt.</div>
+              </div>
+            </div>
+
+            <!-- Visual Asset Attachments -->
+            <div class="field-group">
+              <div class="field-label-row">
+                <label class="field-label">Attach Visual Screenshots (Optional)</label>
+                <span class="field-hint">PNG, JPEG, WebP</span>
+              </div>
+              <div class="media-upload-area" id="media-dropzone">
+                <input type="file" id="input-media-files" multiple accept="image/*" style="display: none;">
+                <button class="btn-xs btn-outline" id="btn-browse-media">📎 Upload Screenshots</button>
+                <span class="media-preview-count" id="media-count-text">No images attached</span>
+              </div>
+              <div class="media-thumbnails" id="media-thumbnails"></div>
+            </div>
+
+            <!-- Execution Options & Dispatch Buttons -->
+            <div class="dispatch-footer">
+              <div class="dispatch-options">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="check-fresh-chat">
+                  <span>Start Fresh Chat Tab</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="check-multipart">
+                  <span>Auto Multi-Part Decomposition</span>
+                </label>
+              </div>
+
+              <div class="dispatch-buttons">
+                <button class="btn btn-primary" id="btn-dispatch-task">
+                  <span class="btn-icon">⚡</span> Dispatch to Web LLM
+                </button>
+                <button class="btn btn-warning" id="btn-retry-task" style="display: none;">
+                  <span class="btn-icon">🔄</span> Retry Last Task
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: LIVE EXECUTION & CODE OUTPUT -->
+          <div class="panel results-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="panel-icon">📺</span> Real-Time Monitor & Code Results
+              </div>
+              <div class="panel-actions">
+                <button class="btn-xs btn-ghost" id="btn-copy-response">Copy All</button>
+              </div>
+            </div>
+
+            <!-- Live Status & Step Timeline -->
+            <div class="execution-status-bar" id="execution-status-bar">
+              <div class="status-step-dot" id="step-dot"></div>
+              <div class="status-step-info">
+                <div class="status-step-title" id="status-step-title">Idle</div>
+                <div class="status-step-detail" id="status-step-detail">Ready to dispatch prompts to your active web chat interface.</div>
+              </div>
+            </div>
+
+            <!-- Multipart Progress Indicator (if active) -->
+            <div class="multipart-tracker" id="multipart-tracker" style="display: none;">
+              <div class="multipart-header">
+                <span class="multipart-title" id="multipart-title">Multi-Part Task: Part 1 of 3</span>
+                <span class="multipart-progress" id="multipart-percent">33%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="multipart-progress-fill" style="width: 33%;"></div>
+              </div>
+            </div>
+
+            <!-- Extracted Code Blocks Deck -->
+            <div class="code-blocks-container" id="code-blocks-container">
+              <div class="empty-state-card">
+                <div class="empty-icon">💡</div>
+                <div class="empty-title">No Active Generation</div>
+                <div class="empty-desc">When you dispatch a task, AI Bridge injects the prompt into your chosen web chat, tracks reasoning, extracts code blocks, and enables 1-click deployment here.</div>
+              </div>
+            </div>
+
+            <!-- Raw Response Viewer (Collapsible) -->
+            <div class="raw-response-wrapper">
+              <details class="raw-details">
+                <summary class="raw-summary">View Full AI Markdown Response</summary>
+                <pre class="raw-output-pre" id="raw-response-pre">No response received yet.</pre>
+              </details>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 2: WORKSPACE FILE EXPLORER
+           ========================================== -->
+      <section class="tab-page" id="view-workspace">
+        <div class="workspace-grid">
+          
+          <!-- LEFT: FILE BROWSER -->
+          <div class="panel explorer-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="panel-icon">📂</span> Filesystem Navigator
+              </div>
+              <div class="panel-actions">
+                <button class="btn-xs btn-primary" id="btn-add-selected-to-prompt">
+                  + Add Checked Files to Prompt (<span id="checked-files-badge">0</span>)
+                </button>
+              </div>
+            </div>
+
+            <!-- Navigation Controls & Breadcrumbs -->
+            <div class="explorer-nav-bar">
+              <button class="btn-icon-sm" id="btn-dir-up" title="Up one folder">⬆️</button>
+              <div class="breadcrumbs-container" id="breadcrumbs-bar">
+                <span class="breadcrumb-item root">/</span>
+              </div>
+              <button class="btn-icon-sm" id="btn-refresh-dir" title="Refresh files">🔄</button>
+            </div>
+
+            <!-- File Search Filter -->
+            <div class="explorer-search-bar">
+              <span class="search-symbol">🔍</span>
+              <input type="text" id="input-explorer-filter" class="input-search" placeholder="Search filenames (e.g. index.js, package.json)..." spellcheck="false">
+            </div>
+
+            <!-- File List Tree -->
+            <div class="file-list-view" id="file-list-view">
+              <div class="loading-state">Loading directory...</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: FILE PREVIEWER -->
+          <div class="panel preview-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="panel-icon">📄</span> <span id="preview-filename">Select a file to preview</span>
+              </div>
+              <div class="panel-actions">
+                <button class="btn-xs btn-ghost" id="btn-copy-preview-content">Copy</button>
+              </div>
+            </div>
+            <div class="file-preview-content">
+              <pre class="code-preview" id="code-preview-pre">// Select any file from the explorer on the left to inspect its contents</pre>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 3: SETTINGS & VPS PROFILES
+           ========================================== -->
+      <section class="tab-page" id="view-settings">
+        <div class="settings-grid">
+          
+          <!-- OPERATIONAL MODE SELECTOR -->
+          <div class="settings-card mode-card">
+            <div class="card-header">
+              <div class="card-title">⚙️ Operational Environment</div>
+              <div class="card-desc">Choose whether AI Bridge edits local files on your machine or deploys directly to remote VPS servers.</div>
+            </div>
+            <div class="mode-options-grid">
+              <div class="mode-tile active" id="tile-mode-local">
+                <div class="tile-icon">💻</div>
+                <div class="tile-title">Local Filesystem Mode (Default)</div>
+                <div class="tile-desc">No VPS required. Works directly on your local project directories with autonomous code writing, syntax checks, and file browsing.</div>
+                <div class="tile-status" id="tile-status-local">ACTIVE</div>
+              </div>
+
+              <div class="mode-tile" id="tile-mode-vps">
+                <div class="tile-icon">☁️</div>
+                <div class="tile-title">Multi-VPS Remote Mode</div>
+                <div class="tile-desc">Connect securely to one or more remote VPS servers via SSH2/SFTP. Deploy code updates and restart PM2 apps remotely.</div>
+                <div class="tile-status" id="tile-status-vps">INACTIVE</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LOCAL WORKSPACE CONFIG -->
+          <div class="settings-card" id="card-local-settings">
+            <div class="card-header">
+              <div class="card-title">📁 Local Workspace Directory</div>
+              <div class="card-desc">The local root folder on your computer that AI Bridge will manage.</div>
+            </div>
+            <div class="setting-row">
+              <input type="text" id="input-local-workspace-path" class="input-text" placeholder="C:\Users\username\my-project" spellcheck="false">
+              <button class="btn btn-secondary" id="btn-save-workspace-path">Save Directory</button>
+            </div>
+          </div>
+
+          <!-- MULTI-VPS PROFILES MANAGER -->
+          <div class="settings-card" id="card-vps-settings">
+            <div class="card-header-row">
+              <div>
+                <div class="card-title">☁️ Multi-VPS SSH Profiles</div>
+                <div class="card-desc">Add as many remote servers as you want. Zero hardcoded details. Switch between servers with one click.</div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-show-add-vps-modal">+ Add New VPS Profile</button>
+            </div>
+
+            <div class="vps-profiles-list" id="vps-profiles-list">
+              <div class="empty-state-card">
+                <div class="empty-desc">No VPS profiles configured yet. If you have remote servers, click "Add New VPS Profile" above to configure SSH access.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 4: USER GUIDE & AGENT MANUAL
+           ========================================== -->
+      <section class="tab-page" id="view-guide">
+        <div class="guide-container">
+          
+          <div class="guide-hero">
+            <h1>📖 AI Bridge — Community Guide & Quickstart</h1>
+            <p>Everything you need to connect your local AI coding agent with Google AI Studio, Gemini Web, ChatGPT, or Claude without paying for API tokens.</p>
+          </div>
+
+          <div class="guide-cards-grid">
+            
+            <!-- GUIDE CARD 1: CHROME EXTENSION INSTALL -->
+            <div class="guide-card">
+              <div class="guide-card-icon">🧩</div>
+              <div class="guide-card-title">1. Install Chrome Extension (2 Minutes)</div>
+              <div class="guide-card-content">
+                <ol class="guide-steps">
+                  <li>Open Google Chrome and navigate to: <code class="code-inline">chrome://extensions</code></li>
+                  <li>Enable <strong>"Developer mode"</strong> in the top-right corner.</li>
+                  <li>Click <strong>"Load unpacked"</strong> in the top-left corner.</li>
+                  <li>Select the <code class="code-inline">extension/</code> folder inside this project directory.</li>
+                  <li>The extension badge will turn <strong><span style="color:#10b981;">ON</span></strong> when the server is running on <code class="code-inline">localhost:3388</code>.</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- GUIDE CARD 2: USING GOOGLE AI STUDIO & WEB CHATS -->
+            <div class="guide-card">
+              <div class="guide-card-icon">⚡</div>
+              <div class="guide-card-title">2. Google AI Studio & Multi-Chat Support</div>
+              <div class="guide-card-content">
+                <p>AI Bridge is built to talk with any web AI chat interface. You can select your platform from the dropdown or enter a custom link:</p>
+                <ul class="guide-bullets">
+                  <li><strong>Google AI Studio App Builder</strong> (<code class="code-inline">aistudio.google.com/apps</code>): Full application generation with Gemini 2.5 Pro.</li>
+                  <li><strong>Google AI Studio Playground</strong> (<code class="code-inline">aistudio.google.com/prompts/new_chat</code>): Unlimited context playground.</li>
+                  <li><strong>Google Gemini Web</strong> (<code class="code-inline">gemini.google.com/app</code>): Direct reasoning with visual media upload support.</li>
+                  <li><strong>ChatGPT & Claude</strong> (<code class="code-inline">chatgpt.com</code>, <code class="code-inline">claude.ai</code>): Full multi-model flexibility.</li>
+                  <li><strong>Custom Website Link</strong>: Any local or remote LLM web interface.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- GUIDE CARD 3: LOCAL FILES VS REMOTE VPS -->
+            <div class="guide-card">
+              <div class="guide-card-icon">💻</div>
+              <div class="guide-card-title">3. Local Files vs Multi-VPS Remote Mode</div>
+              <div class="guide-card-content">
+                <p><strong>Do you need a VPS? Absolutely NOT!</strong></p>
+                <ul class="guide-bullets">
+                  <li><strong>Local Mode (Default):</strong> Point AI Bridge to your project folder on your Windows/Mac/Linux computer. Generated code is syntax-checked and written directly to your local files.</li>
+                  <li><strong>Multi-VPS Mode:</strong> If you have remote deployment servers, add SSH profiles in the <em>Settings & VPS</em> tab. AI Bridge can upload files via SFTP and trigger <code class="code-inline">pm2 restart</code> automatically.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- GUIDE CARD 4: CONNECTING AI CODING AGENTS -->
+            <div class="guide-card">
+              <div class="guide-card-icon">🤖</div>
+              <div class="guide-card-title">4. Connect External AI Coding Agents</div>
+              <div class="guide-card-content">
+                <p>Any agent (Google Antigravity, Cursor, Windsurf, Claude Code, Aider, CLI) can use AI Bridge as a sidecar without needing API keys:</p>
+                <div class="code-snippet-box">
+                  <div class="snippet-header">Dispatch a task from any agent or terminal:</div>
+                  <pre class="snippet-code">curl -X POST http://localhost:3388/api/task/dispatch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "goal": "Refactor authentication middleware with JWT validation",
+    "chatUrl": "https://aistudio.google.com/apps"
+  }'</pre>
+                </div>
+                <div class="code-snippet-box" style="margin-top: 10px;">
+                  <div class="snippet-header">Retrieve generated code and code blocks:</div>
+                  <pre class="snippet-code">curl http://localhost:3388/api/handoff/latest</pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- GUIDE CARD 5: FEATURE GUARD & ANTI-REGRESSION -->
+            <div class="guide-card">
+              <div class="guide-card-icon">🛡️</div>
+              <div class="guide-card-title">5. Anti-Regression Feature Guard</div>
+              <div class="guide-card-content">
+                <p>When applying code to an existing file, AI Bridge automatically scans both versions before writing:</p>
+                <ul class="guide-bullets">
+                  <li>Extracts functions, React hooks, imports, components, and API routes.</li>
+                  <li>Calculates a preservation score.</li>
+                  <li>Blocks accidental truncations or drops with a regression warning.</li>
+                  <li>Validates syntax via <code class="code-inline">node --check</code>.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- GUIDE CARD 6: OPEN SOURCE & PRIVACY GUARANTEE -->
+            <div class="guide-card">
+              <div class="guide-card-icon">🔒</div>
+              <div class="guide-card-title">6. Privacy & Open Source Guarantee</div>
+              <div class="guide-card-content">
+                <p>This software is 100% open-source under the MIT license:</p>
+                <ul class="guide-bullets">
+                  <li>Zero telemetry, zero tracking, zero third-party reporting.</li>
+                  <li>All passwords and SSH keys are stored locally on your machine in <code class="code-inline">config.json</code> (gitignored).</li>
+                  <li>Ready to publish, clone, and fork on GitHub.</li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- MODAL: ADD / EDIT VPS PROFILE -->
+    <div class="modal-backdrop" id="modal-vps-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title" id="modal-vps-title">Add Remote VPS Profile</div>
+          <button class="btn-icon-xs" id="btn-close-vps-modal">✕</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="vps-field-id">
+
+          <div class="form-row">
+            <div class="form-col">
+              <label class="field-label">Profile Label / Friendly Name</label>
+              <input type="text" id="vps-field-name" class="input-text" placeholder="Production Server, Discord Bot VPS, etc." spellcheck="false">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label class="field-label">Host / IP Address *</label>
+              <input type="text" id="vps-field-host" class="input-text" placeholder="e.g. 192.168.1.100 or server.example.com" spellcheck="false" required>
+            </div>
+            <div class="form-col-sm">
+              <label class="field-label">SSH Port</label>
+              <input type="number" id="vps-field-port" class="input-text" value="22">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label class="field-label">SSH Username</label>
+              <input type="text" id="vps-field-username" class="input-text" value="root" spellcheck="false">
+            </div>
+            <div class="form-col">
+              <label class="field-label">Authentication Type</label>
+              <select id="vps-field-authtype" class="input-select">
+                <option value="password">Password</option>
+                <option value="key">Private Key</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" id="row-vps-password">
+            <div class="form-col">
+              <label class="field-label">SSH Password</label>
+              <input type="password" id="vps-field-password" class="input-text" placeholder="Enter root or user password">
+            </div>
+          </div>
+
+          <div class="form-row" id="row-vps-key" style="display: none;">
+            <div class="form-col">
+              <label class="field-label">Private Key (OpenSSH PEM)</label>
+              <textarea id="vps-field-key" class="input-textarea" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label class="field-label">Remote Workspace Root Path</label>
+              <input type="text" id="vps-field-remotepath" class="input-text" value="/root" placeholder="/root or /var/www/my-app" spellcheck="false">
+            </div>
+            <div class="form-col">
+              <label class="field-label">PM2 App Name (Optional)</label>
+              <input type="text" id="vps-field-pm2" class="input-text" placeholder="e.g. my-bot (auto-restarts on deploy)" spellcheck="false">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-test-vps-modal">🔌 Test SSH Connection</button>
+          <div class="modal-footer-right">
+            <button class="btn btn-ghost" id="btn-cancel-vps-modal">Cancel</button>
+            <button class="btn btn-primary" id="btn-save-vps-modal">Save Profile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

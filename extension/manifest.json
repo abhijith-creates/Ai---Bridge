@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "AI Bridge - Universal Web LLM Connector",
+  "version": "1.0.0",
+  "description": "Bridges local AI coding agents directly with Google AI Studio, Gemini Web, ChatGPT, Claude, and custom web LLM chats without requiring paid API keys.",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "alarms",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://localhost:3388/*",
+    "ws://localhost:3388/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*",
+        "https://chatgpt.com/*",
+        "https://*.openai.com/*",
+        "https://claude.ai/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AI Bridge Status"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

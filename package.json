@@ -1,0 +1,35 @@
+{
+  "name": "ai-bridge",
+  "version": "1.0.0",
+  "description": "Universal Open-Source Agent-to-Browser Sidecar & Code Deployment Engine. Seamlessly connects Antigravity, Cursor, and any AI agent with Google AI Studio, Gemini, ChatGPT, and Claude web models with zero API keys.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "app": "electron .",
+    "server": "node server.js",
+    "dev": "electron ."
+  },
+  "keywords": [
+    "ai-agent",
+    "sidecar",
+    "google-ai-studio",
+    "gemini",
+    "antigravity",
+    "cursor",
+    "deployment",
+    "vps",
+    "code-generation"
+  ],
+  "author": "Open Source Community",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ssh2": "^1.15.0",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "electron": "^44.9.1"
+  }
+}

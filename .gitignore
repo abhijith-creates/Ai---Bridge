@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Local sensitive configuration (contains user VPS credentials & custom paths)
+config.json
+.env
+.env.local
+
+# Generated artifacts and handoffs
+handoff/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

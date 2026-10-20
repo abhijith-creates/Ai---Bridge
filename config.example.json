@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "mode": "local",
+  "localWorkspace": {
+    "path": "./workspace",
+    "autoCreate": true
+  },
+  "activeVpsId": null,
+  "vpsProfiles": [],
+  "defaultTargetPlatform": "aistudio_apps",
+  "targetPlatforms": [
+    {
+      "id": "aistudio_apps",
+      "name": "Google AI Studio (App Builder)",
+      "url": "https://aistudio.google.com/apps",
+      "category": "Google AI"
+    },
+    {
+      "id": "aistudio_chat",
+      "name": "Google AI Studio (Playground)",
+      "url": "https://aistudio.google.com/prompts/new_chat",
+      "category": "Google AI"
+    },
+    {
+      "id": "gemini_web",
+      "name": "Google Gemini Web",
+      "url": "https://gemini.google.com/app",
+      "category": "Google AI"
+    },
+    {
+      "id": "chatgpt_web",
+      "name": "ChatGPT (OpenAI)",
+      "url": "https://chatgpt.com",
+      "category": "OpenAI"
+    },
+    {
+      "id": "claude_web",
+      "name": "Claude (Anthropic)",
+      "url": "https://claude.ai/new",
+      "category": "Anthropic"
+    }
+  ]
+}
