@@ -116,6 +116,15 @@ function init() {
   setupWebSocket();
   loadConfig();
   loadHandoff();
+
+  const btnOpenExt = document.getElementById('btn-open-ext-folder');
+  if (btnOpenExt) {
+    btnOpenExt.addEventListener('click', async () => {
+      try {
+        await fetch('/api/open-extension-folder', { method: 'POST' });
+      } catch (e) {}
+    });
+  }
 }
 
 function setupWebSocket() {

@@ -11,6 +11,7 @@ const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const { exec } = require('child_process');
 
 const configManager = require('./config-manager');
 const localWorkspace = require('./local-workspace');
@@ -291,6 +292,15 @@ app.get('/api/health', (req, res) => {
     mode: configManager.config.mode,
     timestamp: new Date().toISOString()
   });
+});
+
+app.post('/api/open-extension-folder', (req, res) => {
+  const extDir = path.join(__dirname, 'extension');
+  const cmd = process.platform === 'win32' ? `explorer.exe "${extDir}"` : `open "${extDir}"`;
+  exec(cmd, (err) => {
+    if (err) console.warn('[Open Extension Warning]', err.message);
+  });
+  res.json({ success: true, path: extDir });
 });
 
 // Configuration Management
