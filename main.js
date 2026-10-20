@@ -4,23 +4,52 @@
  * requiring the user to open any terminal.
  */
 
-const { app, BrowserWindow, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
-const http = require('http');
+const net = require('net');
 
 let mainWindow = null;
-let serverProcess = null;
 
-// Ensure server is running on port 3388
-function checkServerRunning(callback) {
-  const req = http.get('http://localhost:3388/api/health', (res) => {
-    callback(res.statusCode === 200);
+// Prevent multiple instances: if user double-clicks shortcut while running, focus existing window
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  process.exit(0);
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
   });
-  req.on('error', () => callback(false));
-  req.setTimeout(1000, () => {
-    req.abort();
+}
+
+// Ignore EADDRINUSE or port conflicts cleanly without showing error popups
+process.on('uncaughtException', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log('[Electron] Port 3388 in use, reusing active server.');
+  } else {
+    console.error('[Electron Uncaught]', err.message);
+  }
+});
+
+// Check if port 3388 is already bound
+function isPortInUse(port, callback) {
+  const socket = new net.Socket();
+  socket.setTimeout(600);
+  socket.on('connect', () => {
+    socket.destroy();
+    callback(true);
+  });
+  socket.on('error', () => {
+    socket.destroy();
     callback(false);
   });
+  socket.on('timeout', () => {
+    socket.destroy();
+    callback(false);
+  });
+  socket.connect(port, '127.0.0.1');
 }
 
 function startEmbeddedServer() {
@@ -28,7 +57,7 @@ function startEmbeddedServer() {
     console.log('[Electron] Starting embedded server...');
     require('./server');
   } catch (err) {
-    console.error('[Electron] Embedded server error:', err.message);
+    console.log('[Electron] Embedded server start note:', err.message);
   }
 }
 
@@ -49,7 +78,7 @@ function createWindow() {
     }
   });
 
-  // Open external links (like AI Studio, Gemini, ChatGPT) in user's default browser
+  // Open external links (AI Studio, Gemini, ChatGPT, Claude) in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http://localhost:3388')) {
       return { action: 'allow' };
@@ -58,7 +87,7 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  // Load the desktop app interface
+  // Load the desktop interface
   mainWindow.loadURL('http://localhost:3388');
 
   mainWindow.on('closed', () => {
@@ -67,11 +96,12 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  checkServerRunning((isRunning) => {
-    if (!isRunning) {
+  isPortInUse(3388, (inUse) => {
+    if (!inUse) {
       startEmbeddedServer();
       setTimeout(createWindow, 800);
     } else {
+      console.log('[Electron] Port 3388 is already running, opening window directly.');
       createWindow();
     }
   });

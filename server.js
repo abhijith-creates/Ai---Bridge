@@ -627,12 +627,25 @@ app.post('/api/apply/codeblock', async (req, res) => {
   }
 });
 
-// Start Server
-server.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`⚡ AI Bridge (Community Edition) Running on :${PORT}`);
-  console.log(`📁 Local Workspace: ${configManager.config.localWorkspace.path}`);
-  console.log(`🌐 Web UI: http://localhost:${PORT}`);
-  console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws`);
-  console.log(`=======================================================`);
+// Handle port conflicts gracefully (e.g. if another instance is already running)
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`[Server] Port ${PORT} is already in use. Reusing active server.`);
+  } else {
+    console.error('[Server Error]', err.message);
+  }
 });
+
+// Start Server
+try {
+  server.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`⚡ AI Bridge (Community Edition) Running on :${PORT}`);
+    console.log(`📁 Local Workspace: ${configManager.config.localWorkspace.path}`);
+    console.log(`🌐 Web UI: http://localhost:${PORT}`);
+    console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws`);
+    console.log(`=======================================================`);
+  });
+} catch (e) {
+  console.log('[Server] Port 3388 already bound, reusing existing instance.');
+}
