@@ -8,6 +8,7 @@ const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
 
 let mainWindow = null;
+let embeddedServer = null;
 
 // Ignore port conflicts cleanly if a server is already running
 process.on('uncaughtException', (err) => {
@@ -18,15 +19,39 @@ process.on('uncaughtException', (err) => {
   }
 });
 
-let embeddedServer = null;
+function startEmbeddedServer(onReady) {
+  let called = false;
+  const done = () => {
+    if (!called) {
+      called = true;
+      if (typeof onReady === 'function') onReady();
+    }
+  };
 
-function startEmbeddedServer() {
   try {
     console.log('[Electron] Starting embedded server...');
     embeddedServer = require('./server');
+
+    if (embeddedServer && embeddedServer.server) {
+      if (embeddedServer.server.listening) {
+        done();
+      } else {
+        embeddedServer.server.once('listening', done);
+        embeddedServer.server.once('error', (err) => {
+          console.log('[Electron] Server listen note:', err.message);
+          done();
+        });
+      }
+    } else {
+      done();
+    }
   } catch (err) {
     console.log('[Electron] Server note:', err.message);
+    done();
   }
+
+  // Safety fallback: never hang waiting for server
+  setTimeout(done, 600);
 }
 
 function createWindow() {
@@ -40,6 +65,7 @@ function createWindow() {
     icon: path.join(__dirname, 'extension/icons/icon128.png'),
     autoHideMenuBar: true,
     show: true,
+    center: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -47,7 +73,7 @@ function createWindow() {
     }
   });
 
-  // Open external links (AI Studio, Gemini, ChatGPT, Claude) in default browser
+  // Open external links in default web browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http://localhost:3388')) {
       return { action: 'allow' };
@@ -81,39 +107,25 @@ function createWindow() {
       mainWindow.show();
       mainWindow.focus();
     }
-  }, 1200);
+  }, 1000);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-// Single instance handling: if already open, focus or recreate the window
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on('second-instance', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-      mainWindow.focus();
-    } else {
+// Start application
+app.whenReady().then(() => {
+  startEmbeddedServer(() => {
+    createWindow();
+  });
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
-
-  app.whenReady().then(() => {
-    startEmbeddedServer();
-    createWindow();
-
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-      }
-    });
-  });
-}
+});
 
 app.on('before-quit', () => {
   try {
@@ -134,4 +146,3 @@ app.on('window-all-closed', () => {
     process.exit(0);
   }
 });
-
