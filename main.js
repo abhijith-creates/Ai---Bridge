@@ -18,10 +18,12 @@ process.on('uncaughtException', (err) => {
   }
 });
 
+let embeddedServer = null;
+
 function startEmbeddedServer() {
   try {
     console.log('[Electron] Starting embedded server...');
-    require('./server');
+    embeddedServer = require('./server');
   } catch (err) {
     console.log('[Electron] Server note:', err.message);
   }
@@ -67,25 +69,37 @@ function createWindow() {
   });
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
   });
+
+  // Safety fallback: ensure window is visible even if ready-to-show was delayed
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }, 1200);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-// Single instance handling: if already open, focus the window
+// Single instance handling: if already open, focus or recreate the window
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.show();
       mainWindow.focus();
+    } else {
+      createWindow();
     }
   });
 
@@ -101,8 +115,23 @@ if (!gotTheLock) {
   });
 }
 
+app.on('before-quit', () => {
+  try {
+    if (embeddedServer && embeddedServer.server && embeddedServer.server.close) {
+      embeddedServer.server.close();
+    }
+  } catch (e) {}
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    try {
+      if (embeddedServer && embeddedServer.server && embeddedServer.server.close) {
+        embeddedServer.server.close();
+      }
+    } catch (e) {}
     app.quit();
+    process.exit(0);
   }
 });
+

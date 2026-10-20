@@ -649,3 +649,6 @@ try {
 } catch (e) {
   console.log('[Server] Port 3388 already bound, reusing existing instance.');
 }
+
+module.exports = { app, server, wss, PORT };
+

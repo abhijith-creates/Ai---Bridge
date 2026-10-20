@@ -12,7 +12,7 @@ $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
 if (Test-Path $ElectronExe) {
     # Direct GUI executable - launches directly without any command prompt window
     $Shortcut.TargetPath = $ElectronExe
-    $Shortcut.Arguments = "."
+    $Shortcut.Arguments = "`"$ScriptDir`""
     $Shortcut.WorkingDirectory = $ScriptDir
     $Shortcut.IconLocation = "$ElectronExe,0"
 } else {
