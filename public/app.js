@@ -21,9 +21,11 @@ const state = {
 
 // DOM Elements Cache
 const el = {
-  // Navigation
+  // Navigation & Top Bar
   tabButtons: document.querySelectorAll('.nav-tab'),
   tabPages: document.querySelectorAll('.tab-page'),
+  btnModeToggleLocal: document.getElementById('btn-mode-toggle-local'),
+  btnModeToggleVps: document.getElementById('btn-mode-toggle-vps'),
   modeDot: document.getElementById('mode-dot'),
   modeValue: document.getElementById('mode-value'),
   chromeDot: document.getElementById('chrome-dot'),
@@ -117,6 +119,13 @@ function init() {
   loadConfig();
   loadHandoff();
 
+  if (el.btnModeToggleLocal) {
+    el.btnModeToggleLocal.addEventListener('click', () => setMode('local'));
+  }
+  if (el.btnModeToggleVps) {
+    el.btnModeToggleVps.addEventListener('click', () => setMode('vps'));
+  }
+
   const btnOpenExt = document.getElementById('btn-open-ext-folder');
   if (btnOpenExt) {
     btnOpenExt.addEventListener('click', async () => {
@@ -205,12 +214,12 @@ function handleWsMessage(msg) {
 
 function updateChromeStatus(connected) {
   state.chromeConnected = connected;
-  if (connected) {
-    el.chromeDot.className = 'status-indicator active';
-    el.chromeValue.textContent = 'Connected (Online)';
-  } else {
-    el.chromeDot.className = 'status-indicator offline';
-    el.chromeValue.textContent = 'Disconnected';
+  if (el.chromeDot) {
+    el.chromeDot.className = `telemetry-dot ${connected ? 'active' : 'offline'}`;
+  }
+  if (el.chromeValue) {
+    el.chromeValue.textContent = connected ? 'ONLINE' : 'OFFLINE';
+    el.chromeValue.style.color = connected ? 'var(--accent-green)' : 'var(--accent-rose)';
   }
 }
 
@@ -612,7 +621,37 @@ async function loadDirectory(relPath = '') {
     renderBreadcrumbs(data.currentPath, data.absolutePath);
     renderDirectoryItems(state.dirItems);
   } catch (err) {
-    el.fileListView.innerHTML = `<div class="empty-state-card"><div class="empty-desc" style="color:#ef4444;">Error: ${err.message}</div></div>`;
+    if (err.message && err.message.includes('No active VPS profile')) {
+      el.fileListView.innerHTML = `
+        <div class="empty-state-card" style="padding: 28px 18px;">
+          <div class="empty-icon">☁️</div>
+          <div class="empty-title">VPS Server Not Configured</div>
+          <div class="empty-desc" style="margin-bottom: 16px;">
+            You are currently in Remote VPS mode, but haven't added or activated an SSH server yet.
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+            <button class="btn btn-sm btn-primary" id="btn-err-switch-local" style="width:100%; max-width:240px;">
+              💻 Switch to Local Workspace
+            </button>
+            <button class="btn btn-sm btn-outline" id="btn-err-add-vps" style="width:100%; max-width:240px;">
+              ➕ Configure Remote VPS
+            </button>
+          </div>
+        </div>
+      `;
+
+      const btnSwitchLocal = document.getElementById('btn-err-switch-local');
+      if (btnSwitchLocal) {
+        btnSwitchLocal.addEventListener('click', () => setMode('local'));
+      }
+      const btnAddVps = document.getElementById('btn-err-add-vps');
+      if (btnAddVps) {
+        btnAddVps.addEventListener('click', () => openVpsModal());
+      }
+      return;
+    }
+
+    el.fileListView.innerHTML = `<div class="empty-state-card"><div class="empty-desc" style="color:#ef4444;">Error: ${escapeHtml(err.message)}</div></div>`;
   }
 }
 
@@ -792,17 +831,45 @@ function setupSettingsAndVps() {
   });
 
   el.btnTestVpsModal.addEventListener('click', async () => {
-    el.btnTestVpsModal.textContent = 'Testing SSH...';
+    const host = el.vpsFieldHost.value.trim();
+    if (!host) {
+      alert('Host/IP Address is required to test SSH connection');
+      return;
+    }
+
+    const profile = {
+      id: el.vpsFieldId.value || undefined,
+      name: el.vpsFieldName.value.trim() || host,
+      host,
+      port: parseInt(el.vpsFieldPort.value, 10) || 22,
+      username: el.vpsFieldUsername.value.trim() || 'root',
+      remotePath: el.vpsFieldRemotepath.value.trim() || '/root',
+      pm2App: el.vpsFieldPm2.value.trim() || ''
+    };
+
+    if (el.vpsFieldAuthtype.value === 'password') {
+      profile.password = el.vpsFieldPassword.value;
+    } else {
+      profile.privateKey = el.vpsFieldKey.value;
+    }
+
+    el.btnTestVpsModal.textContent = '⏳ Testing SSH Connection...';
     try {
-      const res = await fetch('/api/vps/test', { method: 'POST' });
+      const res = await fetch('/api/vps/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
       const data = await res.json();
       if (data.connected) {
-        alert(`✅ SSH Connection Successful to: ${data.profile}`);
+        const info = data.details?.os ? `\nOS: ${data.details.os}` : '';
+        const latency = data.details?.latencyMs !== undefined ? `\nLatency: ${data.details.latencyMs}ms` : '';
+        alert(`✅ SSH Connection Successful to: ${data.profile || host}${info}${latency}`);
       } else {
-        alert(`❌ Connection failed: ${data.error || data.reason}`);
+        alert(`❌ Connection failed: ${data.error || data.reason || 'Authentication or network timeout'}`);
       }
     } catch (err) {
-      alert(`❌ Connection failed: ${err.message}`);
+      alert(`❌ Connection test error: ${err.message}`);
     } finally {
       el.btnTestVpsModal.textContent = '🔌 Test SSH Connection';
     }
@@ -840,7 +907,10 @@ function setupSettingsAndVps() {
       const data = await res.json();
       if (res.ok) {
         closeVpsModal();
-        loadConfig();
+        await loadConfig();
+        if (state.activeTab === 'workspace') {
+          loadDirectory(state.currentDir);
+        }
       } else {
         alert(`Error saving VPS: ${data.error}`);
       }
@@ -851,6 +921,9 @@ function setupSettingsAndVps() {
 }
 
 async function setMode(mode) {
+  if (mode === 'vps' && (!state.config?.vpsProfiles || state.config.vpsProfiles.length === 0)) {
+    openVpsModal();
+  }
   try {
     const res = await fetch('/api/config/mode', {
       method: 'POST',
@@ -858,7 +931,11 @@ async function setMode(mode) {
       body: JSON.stringify({ mode })
     });
     if (res.ok) {
-      loadConfig();
+      await loadConfig();
+      state.currentDir = '';
+      if (state.activeTab === 'workspace') {
+        loadDirectory('');
+      }
     }
   } catch (err) {}
 }
@@ -889,8 +966,11 @@ function renderConfig(config) {
 
   // Mode UI
   const isLocal = config.mode === 'local';
-  el.modeDot.className = `status-indicator ${isLocal ? 'local' : 'active'}`;
-  el.modeValue.textContent = isLocal ? 'Local Workspace' : 'Remote VPS';
+  if (el.modeDot) el.modeDot.className = `status-indicator ${isLocal ? 'local' : 'active'}`;
+  if (el.modeValue) el.modeValue.textContent = isLocal ? 'Local Workspace' : 'Remote VPS';
+
+  if (el.btnModeToggleLocal) el.btnModeToggleLocal.classList.toggle('active', isLocal);
+  if (el.btnModeToggleVps) el.btnModeToggleVps.classList.toggle('active', !isLocal);
 
   el.tileModeLocal.classList.toggle('active', isLocal);
   el.tileModeVps.classList.toggle('active', !isLocal);
@@ -947,7 +1027,11 @@ function renderVpsProfiles(profiles, activeId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: p.id })
         });
-        loadConfig();
+        await loadConfig();
+        state.currentDir = '';
+        if (state.activeTab === 'workspace') {
+          loadDirectory('');
+        }
       });
     }
 

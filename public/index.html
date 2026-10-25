@@ -14,51 +14,107 @@
   <div class="app-layout">
     <!-- TOP NAVIGATION BAR -->
     <header class="app-header">
-      <div class="header-left">
-        <div class="brand-logo">⚡</div>
-        <div class="brand-info">
-          <div class="brand-title">AI BRIDGE <span class="badge-os">PRO</span></div>
-          <div class="brand-subtitle">Universal Web LLM Superconnector & Agent Sidecar</div>
+      <!-- ZONE 1: BRAND IDENTITY & WORKSPACE MODE (LEFT) -->
+      <div class="header-zone header-left">
+        <div class="brand-cluster">
+          <div class="brand-logo-glow">
+            <div class="brand-logo">⚡</div>
+          </div>
+          <div class="brand-info">
+            <div class="brand-title">
+              <span>AI BRIDGE</span>
+              <span class="badge-pro">PRO v1.2</span>
+            </div>
+            <div class="brand-subtitle">Universal Web LLM Superconnector</div>
+          </div>
+        </div>
+
+        <div class="header-divider"></div>
+
+        <!-- Interactive Mode Switcher Segmented Control -->
+        <div class="mode-switcher-container" title="Active Workspace Target">
+          <span class="mode-switcher-label">WORKSPACE:</span>
+          <div class="mode-toggle-group">
+            <button class="mode-toggle-btn active" id="btn-mode-toggle-local" title="Switch to Local Workspace">
+              <span class="mode-btn-icon">💻</span>
+              <span class="mode-btn-text">Local</span>
+            </button>
+            <button class="mode-toggle-btn" id="btn-mode-toggle-vps" title="Switch to Remote VPS">
+              <span class="mode-btn-icon">☁️</span>
+              <span class="mode-btn-text">VPS</span>
+            </button>
+          </div>
+          <!-- Hidden fallback elements to ensure backward compatibility with app.js -->
+          <span class="status-indicator local" id="mode-dot" style="display: none;"></span>
+          <span id="mode-value" style="display: none;">Local Workspace</span>
         </div>
       </div>
 
-      <!-- Live Connectivity Badges -->
-      <div class="header-center">
-        <div class="status-badge" id="badge-mode">
-          <span class="status-indicator local" id="mode-dot"></span>
-          <span class="badge-label">Mode:</span>
-          <span class="badge-value" id="mode-value">Local Workspace</span>
-        </div>
-
-        <div class="status-badge" id="badge-chrome">
-          <span class="status-indicator offline" id="chrome-dot"></span>
-          <span class="badge-label">Chrome Extension:</span>
-          <span class="badge-value" id="chrome-value">Disconnected</span>
-        </div>
-
-        <div class="status-badge" id="badge-target">
-          <span class="status-indicator active"></span>
-          <span class="badge-label">Active Target:</span>
-          <span class="badge-value" id="target-value">AI Studio</span>
-        </div>
-      </div>
-
-      <!-- Navigation Tabs -->
-      <div class="header-right">
-        <nav class="nav-tabs">
-          <button class="nav-tab active" data-tab="mission-control" id="tab-btn-mission">
-            <span class="tab-icon">🚀</span> Mission Control
-          </button>
-          <button class="nav-tab" data-tab="workspace" id="tab-btn-workspace">
-            <span class="tab-icon">📁</span> File Explorer
-          </button>
-          <button class="nav-tab" data-tab="settings" id="tab-btn-settings">
-            <span class="tab-icon">⚙️</span> Settings & VPS
-          </button>
-          <button class="nav-tab" data-tab="guide" id="tab-btn-guide">
-            <span class="tab-icon">📖</span> Guide & Setup
-          </button>
+      <!-- ZONE 2: PRIMARY NAVIGATION TABS (CENTER DOCK) -->
+      <div class="header-zone header-center">
+        <nav class="nav-dock">
+          <div class="nav-dock-track">
+            <button class="nav-tab active" data-tab="mission-control" id="tab-btn-mission">
+              <span class="nav-tab-icon">🎯</span>
+              <span class="nav-tab-label">Mission Control</span>
+            </button>
+            <button class="nav-tab" data-tab="workspace" id="tab-btn-workspace">
+              <span class="nav-tab-icon">📂</span>
+              <span class="nav-tab-label">File Explorer</span>
+            </button>
+            <button class="nav-tab" data-tab="settings" id="tab-btn-settings">
+              <span class="nav-tab-icon">⚙️</span>
+              <span class="nav-tab-label">Settings & VPS</span>
+            </button>
+            <button class="nav-tab" data-tab="guide" id="tab-btn-guide">
+              <span class="nav-tab-icon">📖</span>
+              <span class="nav-tab-label">Guide & Docs</span>
+            </button>
+          </div>
         </nav>
+      </div>
+
+      <!-- ZONE 3: LIVE SYSTEM TELEMETRY (RIGHT) -->
+      <div class="header-zone header-right">
+        <div class="telemetry-deck">
+          <div class="telemetry-deck-header">
+            <span class="telemetry-beacon"></span>
+            <span class="telemetry-deck-title">LIVE TELEMETRY</span>
+          </div>
+
+          <div class="telemetry-chips-row">
+            <!-- Sensor 1: Chrome Extension Connection -->
+            <div class="telemetry-chip" id="badge-chrome" title="Chrome Extension Background Bridge">
+              <span class="telemetry-dot offline" id="chrome-dot">
+                <span class="pulse-ring"></span>
+              </span>
+              <div class="telemetry-meta">
+                <span class="telemetry-label">CHROME</span>
+                <span class="telemetry-val" id="chrome-value">Disconnected</span>
+              </div>
+            </div>
+
+            <!-- Sensor 2: Active Browser Target -->
+            <div class="telemetry-chip" id="badge-target" title="Active Web AI Platform">
+              <span class="telemetry-icon">🌐</span>
+              <div class="telemetry-meta">
+                <span class="telemetry-label">TARGET LLM</span>
+                <span class="telemetry-val" id="target-value">AI Studio</span>
+              </div>
+            </div>
+
+            <!-- Sensor 3: Agent Sidecar API -->
+            <div class="telemetry-chip telemetry-agent-chip" title="Local Agent Sidecar Server on :3388">
+              <span class="telemetry-dot active">
+                <span class="pulse-ring"></span>
+              </span>
+              <div class="telemetry-meta">
+                <span class="telemetry-label">AGENT API</span>
+                <span class="telemetry-val">:3388 ONLINE</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 

@@ -8,6 +8,8 @@ config.json
 
 # Generated artifacts and handoffs
 handoff/
+workspace/*
+!workspace/.gitkeep
 *.log
 
 # OS generated files

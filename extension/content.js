@@ -552,25 +552,50 @@ async function retryTaskOnCurrentPage(text, taskId, images = []) {
 
 function extractResponseAndCode(adapter) {
   const responses = document.querySelectorAll(adapter.responseSelectors.join(', '));
-  const latestResponse = responses[responses.length - 1] || document.body;
+  let latestResponse = responses[responses.length - 1];
 
-  const rawText = latestResponse.textContent || '';
+  // If no responses matched via adapter selectors, fallback to scanning likely message containers
+  if (!latestResponse) {
+    const fallbackContainers = document.querySelectorAll([
+      '.chat-turn', '.message-row', '[data-message-author]',
+      '.conversation-turn', 'article', 'main'
+    ].join(', '));
+    if (fallbackContainers.length > 0) {
+      latestResponse = fallbackContainers[fallbackContainers.length - 1];
+    } else {
+      latestResponse = document.body;
+    }
+  }
+
+  // Preserve formatted text with newlines (innerText retains spacing, code blocks and layout)
+  let rawText = '';
+  try {
+    rawText = (latestResponse.innerText || latestResponse.textContent || '').trim();
+  } catch (e) {
+    rawText = (latestResponse.textContent || '').trim();
+  }
+
   const codeBlocks = [];
 
+  // 1. Extract from HTML <pre> elements
   const preElements = latestResponse.querySelectorAll('pre');
   preElements.forEach((pre, index) => {
     const codeEl = pre.querySelector('code') || pre;
-    const rawCode = codeEl.textContent || '';
+    const rawCode = (codeEl.innerText || codeEl.textContent || '').trim();
+    if (!rawCode) return;
 
     let language = 'javascript';
     let targetPath = '';
 
-    const langMatch = (pre.className + ' ' + (codeEl.className || '')).match(/language-([a-zA-Z0-9_-]+)/);
-    if (langMatch) language = langMatch[1];
+    const combinedClasses = (pre.className || '') + ' ' + (codeEl.className || '');
+    const langMatch = combinedClasses.match(/language-([a-zA-Z0-9_-]+)/i) ||
+                      combinedClasses.match(/brush:\s*([a-zA-Z0-9_-]+)/i);
+    if (langMatch) language = langMatch[1].toLowerCase();
 
     const pathMatch = rawCode.match(/(?:path|file|target)=["']?([\/\\a-zA-Z0-9_.-]+)["']?/i) ||
-                      rawCode.match(/^\/\/\s*([\/\\a-zA-Z0-9_.-]+)/m) ||
-                      rawCode.match(/^\/\*\s*([\/\\a-zA-Z0-9_.-]+)\s*\*\//m);
+                      rawCode.match(/^(?:\/\/|#|\/\*)\s*(?:file:|path:|target:)?\s*([\/\\a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+)/im) ||
+                      rawCode.match(/^(?:\/\/|#)\s*([\/\\a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+)/m) ||
+                      rawCode.match(/^\/\/\s*([\/\\a-zA-Z0-9_.-]+)/m);
 
     if (pathMatch) {
       targetPath = pathMatch[1].trim();
@@ -580,9 +605,36 @@ function extractResponseAndCode(adapter) {
       index: index + 1,
       language,
       targetPath,
-      code: rawCode.trim()
+      code: rawCode
     });
   });
+
+  // 2. Fallback: If no <pre> tags were in DOM, extract code fences from rawText
+  if (codeBlocks.length === 0 && rawText.includes('```')) {
+    const fenceRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
+    let match;
+    let idx = 1;
+    while ((match = fenceRegex.exec(rawText)) !== null) {
+      const lang = match[1] ? match[1].toLowerCase() : 'text';
+      const code = match[2].trim();
+      if (!code) continue;
+
+      let targetPath = '';
+      const pathMatch = code.match(/(?:path|file|target)=["']?([\/\\a-zA-Z0-9_.-]+)["']?/i) ||
+                        code.match(/^(?:\/\/|#|\/\*)\s*(?:file:|path:|target:)?\s*([\/\\a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+)/im) ||
+                        code.match(/^(?:\/\/|#)\s*([\/\\a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+)/m);
+      if (pathMatch) {
+        targetPath = pathMatch[1].trim();
+      }
+
+      codeBlocks.push({
+        index: idx++,
+        language: lang,
+        targetPath,
+        code
+      });
+    }
+  }
 
   return { rawText, codeBlocks };
 }

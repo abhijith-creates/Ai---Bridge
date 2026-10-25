@@ -94,12 +94,28 @@ curl -X POST http://localhost:3388/api/task/dispatch \
   }'
 ```
 
-### 2. Retrieve Generated Results
+### 2. Retrieve Generated Results & Text Replies
 ```bash
-curl http://localhost:3388/api/handoff/latest
+# Get clean structured JSON with full text response and code blocks
+curl http://localhost:3388/api/agent/latest-reply
+
+# Or inspect the auto-saved text file directly from your workspace:
+# handoff/latest_reply.txt
+# handoff/snippets/
 ```
 
-### 3. Apply Code Block Directly with Feature Guard
+### 3. Remote VPS Operations via Agent
+```bash
+# List files on remote VPS
+curl http://localhost:3388/api/vps/files?path=/root/my-app
+
+# Execute remote terminal commands on the VPS
+curl -X POST http://localhost:3388/api/vps/exec \
+  -H "Content-Type: application/json" \
+  -d '{ "command": "npm run build && pm2 restart all" }'
+```
+
+### 4. Apply Code Block Directly with Feature Guard
 ```bash
 curl -X POST http://localhost:3388/api/apply/codeblock \
   -H "Content-Type: application/json" \

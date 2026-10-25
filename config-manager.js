@@ -18,7 +18,7 @@ const DEFAULT_CONFIG = {
   },
   activeVpsId: null,
   vpsProfiles: [
-    // Example template (empty by default)
+    // Empty by default (zero hardcoded credentials)
   ],
   defaultTargetPlatform: 'aistudio_apps',
   targetPlatforms: [
@@ -74,6 +74,9 @@ class ConfigManager {
         const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
         const parsed = JSON.parse(raw);
         const merged = { ...DEFAULT_CONFIG, ...parsed };
+        if (merged.mode === 'vps' && (!merged.vpsProfiles || merged.vpsProfiles.length === 0)) {
+          merged.mode = 'local';
+        }
         if (merged.localWorkspace?.path) {
           ensureWorkspaceDir(merged.localWorkspace.path);
         }
@@ -98,7 +101,7 @@ class ConfigManager {
   }
 
   getPublicConfig() {
-    // Return sanitized config (mask passwords for UI)
+    // Return sanitized config (mask passwords and keys for UI safety)
     const sanitized = JSON.parse(JSON.stringify(this.config));
     if (Array.isArray(sanitized.vpsProfiles)) {
       sanitized.vpsProfiles = sanitized.vpsProfiles.map(p => ({
@@ -128,7 +131,7 @@ class ConfigManager {
     return this.config.localWorkspace.path;
   }
 
-  addOrUpdateVpsProfile(profile) {
+  addOrUpdateVpsProfile(profile, activateImmediately = false) {
     if (!profile.id) profile.id = 'vps_' + Date.now();
     const existingIdx = this.config.vpsProfiles.findIndex(p => p.id === profile.id);
     
@@ -146,9 +149,12 @@ class ConfigManager {
       this.config.vpsProfiles.push(profile);
     }
 
-    if (!this.config.activeVpsId) {
+    // Auto-set as active if this is the only profile or requested
+    if (!this.config.activeVpsId || activateImmediately || this.config.vpsProfiles.length === 1) {
       this.config.activeVpsId = profile.id;
+      this.config.mode = 'vps';
     }
+
     this.save();
     return profile;
   }
@@ -157,6 +163,9 @@ class ConfigManager {
     this.config.vpsProfiles = this.config.vpsProfiles.filter(p => p.id !== id);
     if (this.config.activeVpsId === id) {
       this.config.activeVpsId = this.config.vpsProfiles[0]?.id || null;
+      if (!this.config.activeVpsId) {
+        this.config.mode = 'local';
+      }
     }
     this.save();
   }
@@ -165,6 +174,9 @@ class ConfigManager {
     const found = this.config.vpsProfiles.find(p => p.id === id);
     if (found || id === null) {
       this.config.activeVpsId = id;
+      if (found) {
+        this.config.mode = 'vps';
+      }
       this.save();
       return true;
     }
@@ -172,7 +184,7 @@ class ConfigManager {
   }
 
   getActiveVpsProfile() {
-    if (this.config.mode !== 'vps' || !this.config.activeVpsId) return null;
+    if (!this.config.activeVpsId) return null;
     return this.config.vpsProfiles.find(p => p.id === this.config.activeVpsId) || null;
   }
 }
