@@ -45,8 +45,8 @@ graph TD
 
 ### Step 1: Install & Launch Desktop App
 ```bash
-git clone https://github.com/your-username/ai-bridge.git
-cd ai-bridge
+git clone https://github.com/abhijith-creates/Ai---Bridge.git
+cd Ai---Bridge
 npm install
 npm start
 ```
