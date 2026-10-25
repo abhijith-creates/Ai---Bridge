@@ -1,6 +1,12 @@
 @echo off
 cd /d "%~dp0"
 
+:: 0. One-time auto-install dependencies if not already installed
+if not exist "%~dp0node_modules\electron" (
+  echo [AI Bridge] First-time setup detected. Installing required packages...
+  call npm install
+)
+
 :: 1. Launch native Electron executable directly (no cmd/terminal wrapper)
 if exist "%~dp0node_modules\electron\dist\electron.exe" (
   start "" "%~dp0node_modules\electron\dist\electron.exe" "%~dp0."

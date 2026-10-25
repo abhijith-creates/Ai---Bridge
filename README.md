@@ -3,11 +3,12 @@
 > **Universal Web AI Superconnector & Desktop Agent Sidecar**  
 > Connect your local AI coding agents (Google Antigravity, Cursor, Windsurf, Claude Code, Aider, CLI) directly with **Google AI Studio, Gemini Web, ChatGPT, and Claude** without paying for API keys.
 
+[![1-Click Direct Download](https://img.shields.io/badge/⬇️%20Download-1--Click%20ZIP%20(Latest)-blue?style=for-the-badge&logo=windows)](https://github.com/abhijith-creates/Ai---Bridge/archive/refs/heads/main.zip)
+[![Releases](https://img.shields.io/badge/📦%20GitHub-Releases-emerald?style=for-the-badge)](https://github.com/abhijith-creates/Ai---Bridge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
-[![Electron](https://img.shields.io/badge/Desktop-Electron-cyan.svg)](https://www.electronjs.org/)
+[![Desktop](https://img.shields.io/badge/Desktop-Electron-cyan.svg)](https://www.electronjs.org/)
 [![Chrome Extension](https://img.shields.io/badge/Chrome%20Extension-MV3-orange.svg)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Zero Secrets](https://img.shields.io/badge/Privacy-100%25%20Local-emerald.svg)]()
 
 ---
 
@@ -41,16 +42,22 @@ graph TD
 
 ---
 
-## 🚀 Quickstart (3 Steps)
+## 🚀 Quickstart
 
-### Step 1: Install & Launch Desktop App
+### Step 1: Download & Launch Desktop App
+
+#### 📥 Option A: 1-Click Direct Download (No Git Required)
+1. Click **[⬇️ Download AI Bridge (.ZIP)](https://github.com/abhijith-creates/Ai---Bridge/archive/refs/heads/main.zip)**.
+2. Unzip the folder anywhere on your computer.
+3. Double-click **`AiBridge.bat`** (or **`AiBridge.vbs`** for completely silent background launch) — it automatically installs dependencies and opens the desktop app!
+
+#### 💻 Option B: Via Terminal / Git
 ```bash
 git clone https://github.com/abhijith-creates/Ai---Bridge.git
 cd Ai---Bridge
 npm install
 npm start
 ```
-Or simply double-click **`AiBridge.bat`** (or **`AiBridge.vbs`** for completely silent background launch without a console window).
 
 ### Step 2: Load the Chrome Extension (2 Minutes)
 1. Open Google Chrome and visit `chrome://extensions`.
